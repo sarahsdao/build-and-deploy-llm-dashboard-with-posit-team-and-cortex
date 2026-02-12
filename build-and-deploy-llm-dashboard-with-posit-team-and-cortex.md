@@ -305,6 +305,10 @@ print("Successfully established secure connection to Snowflake!")
 
 We have now used Workbench and Python to connect to our Paddy database and table, all securely within Snowflake.
 
+## Configure `chatlas` and `querychat`
+
+When we activated the Python virtual environment above, we installed the packages `chatlas` and `querychat`. However, we still need to [configure them to use a Cortex AI-provided LLM](https://posit-dev.github.io/chatlas/reference/ChatSnowflake.html).
+
 ## Chat with Positron Assistant using Cortex AI
 
 Since we can use natural language to interact with our data via Positron Assistant, we don't need to write any additional SQL queries or data manipulation code. Positron Assistant will handle that for us based on our natural language prompts.
