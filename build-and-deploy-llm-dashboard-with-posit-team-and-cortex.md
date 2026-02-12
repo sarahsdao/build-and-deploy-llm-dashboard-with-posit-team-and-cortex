@@ -12,9 +12,9 @@ language: en
 
 ## Overview
 
-In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore agricultural data using natural language queries powered by Snowflake Cortex AI. You'll use Positron Assistant to develop a Shiny application with the `querychat` and `chatlas` packages, then deploy it to Posit Connect with one-click publishing.
+In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore heart failure clinical data using natural language queries powered by Snowflake Cortex AI. You'll use Positron Assistant to develop a Shiny application with the `querychat` and `chatlas` packages, then deploy it to Posit Connect with one-click publishing.
 
-By the end of this guide, you'll have a fully functional dashboard where users can ask questions like "How do wind speed, direction, and humidity influence paddy (rice seed) growth?" or "Which factors have the strongest influence on paddy yield?" and get instant visualizations and insights.
+By the end of this guide, you'll have a fully functional dashboard where users can ask questions like "What clinical factors are most associated with mortality risk in heart failure patients?" or "How do age, ejection fraction, and serum creatinine levels relate to patient survival?" and get instant visualizations and insights.
 
 ### What You Will Learn
 
@@ -25,7 +25,7 @@ By the end of this guide, you'll have a fully functional dashboard where users c
 
 ### What You Will Build
 
-- A Snowflake database containing agriculture data
+- A Snowflake database containing heart failure clinical records
 - An interactive Shiny dashboard with natural language query capabilities built using Cortex AI
 - A published application accessible to your team on Posit Connect
 
@@ -38,22 +38,22 @@ By the end of this guide, you'll have a fully functional dashboard where users c
 
 ## Setup
 
-In this section, we'll set up a database and warehouse in Snowflake, then load agriculture data that we'll query through our LLM dashboard.
+In this section, we'll set up a database and warehouse in Snowflake, then load heart failure clinical data that we'll query through our LLM dashboard.
 
 ### Create Database and Warehouse
 
-For this analysis, we'll use the [Paddy dataset](https://archive.ics.uci.edu/dataset/1186/paddy+dataset) from UC Irvine.
+For this analysis, we'll use the [Heart Failure Clinical Records dataset](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records) from UC Irvine. This medical dataset contains 299 patient records with 13 clinical features that can be used to predict survival outcomes.
 
 In Snowsight, open a SQL worksheet (**+** > **SQL File**). Then, paste in and run the following code, which creates the necessary database, schema, and warehouse. Make sure to change the role to your own role.
 
 ```sql
 USE ROLE SYSADMIN; -- Replace with your actual Snowflake role (e.g., sysadmin)
 
-CREATE OR REPLACE DATABASE PADDY_DATA;
+CREATE OR REPLACE DATABASE HEART_FAILURE_DATA;
 
 CREATE OR REPLACE SCHEMA PUBLIC;
 
-CREATE OR REPLACE WAREHOUSE PADDY_WH
+CREATE OR REPLACE WAREHOUSE HEART_FAILURE_WH
     WAREHOUSE_SIZE = 'xsmall'
     WAREHOUSE_TYPE = 'standard'
     AUTO_SUSPEND = 60
@@ -61,39 +61,36 @@ CREATE OR REPLACE WAREHOUSE PADDY_WH
     INITIALLY_SUSPENDED = TRUE;
 ```
 
-These commands create a database called `PADDY_DATA` with a `PUBLIC` schema and a small warehouse called `PADDY_WH`.
+These commands create a database called `HEART_FAILURE_DATA` with a `PUBLIC` schema and a small warehouse called `HEART_FAILURE_WH`.
 
 ### Load Data into Snowflake
 
-Now we'll create a table to hold the Paddy dataset.
+Now we'll create a table to hold the Heart Failure Clinical Records dataset.
 
 1. Download the dataset from UCI:
-   [https://archive.ics.uci.edu/dataset/1186/paddy+dataset](https://archive.ics.uci.edu/dataset/1186/paddy+dataset)
+   [https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records)
 
 2. Unzip the downloaded file.
 
-    - You should now see a file named `paddydataset.csv`. We’ll upload this `csv` file into Snowflake.
+    - You should now see a file named `heart_failure_clinical_records_dataset.csv`. We'll upload this `csv` file into Snowflake.
 
 3. In Snowsight, click **Ingestion** > **Load Data into a Table**.
 
-4. Click **Browse** and choose `paddydataset.csv` from your machine.
+4. Click **Browse** and choose `heart_failure_clinical_records_dataset.csv` from your machine.
 
 5. Under **Select or create a database and schema**, choose:
-   - **Database:** `PADDY`
+   - **Database:** `HEART_FAILURE_DATA`
    - **Schema:** `PUBLIC`
 
 6. Under **Select or create a table**:
    - Ensure **+ Create new table** is selected.
-   - For **Name**, enter `PADDY`.
+   - For **Name**, enter `HEART_FAILURE`.
 
 7. Click **Next**, then **Load**.
-    - This dataset has some invalid characters in the column names. Luckily, you can use Snowflake's **Autofix** function to clean all 36 column names: click the red button indicating the **36 errors** and then click **Autofix column names**. This adds quotation marks to the invalid column names.
-
-![](assets/snowflake-autofix.png)
 
 ### Confirm the database, data, and schema
 
-You should now be able to see the agriculture data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `PADDY` > `PUBLIC` > `Tables`. You should now see the `PADDY` table.
+You should now be able to see the heart failure clinical data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `HEART_FAILURE_DATA` > `PUBLIC` > `Tables`. You should now see the `HEART_FAILURE` table.
 
 <!-- TODO: Take screenshot and save as assets/verify-data.png
 ![](assets/verify-data.png)
@@ -288,8 +285,8 @@ import pandas as pd
 # to your Snowflake account via 'connection_name="workbench"'.
 con = snowflake.connector.connect(
     connection_name="workbench",
-    warehouse="PADDY_WH",
-    database="PADDY_DATA",
+    warehouse="HEART_FAILURE_WH",
+    database="HEART_FAILURE_DATA",
     schema="PUBLIC"
 )
 
@@ -298,12 +295,12 @@ con = snowflake.connector.connect(
 # then executed efficiently in Snowflake.
 ibiscon = ibis.snowflake.from_connection(con, create_object_udfs=False)
 
-paddy = ibiscon.table("PADDY")
+heart_failure = ibiscon.table("HEART_FAILURE")
 
 print("Successfully established secure connection to Snowflake!")
 ```
 
-We have now used Workbench and Python to connect to our Paddy database and table, all securely within Snowflake.
+We have now used Workbench and Python to connect to our Heart Failure database and table, all securely within Snowflake.
 
 ## Configure `chatlas` and `querychat`
 
@@ -319,18 +316,11 @@ To stat a chat with Positron Assistant, click on the Positron Assistant icon in 
 
 You can select your model based on what you have available via Cortex AI. This example will use Claude Haiku 4.5
 
-### Clean Data
-
-As we noticed earlier, this dataset has some inconsistencies in its column names. Let's prompt Positron Assistant to clean up some of this first. Enter this prompt:
-
-> Rename the column names
-
 ### Create a Dashboard using Shiny
 
-- Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat
+Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat. Enter this prompt:
 
-> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the Paddy table.
->Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore data in the heart_failure table. I want to be able to ask questions like, "What factors are the most associated with increased risk of mortality after heart failure?"
+> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HEART_FAILURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the heart failure clinical data. I want to be able to ask questions like, "What factors are most associated with increased risk of mortality after heart failure?"
 
 ## Deploy to Posit Connect
 
@@ -359,7 +349,7 @@ Select the files to include:
 - [ ] .env (do not publish credential files)
 
 Choose your publishing options:
-- **Title**: Agriculture Data Explorer
+- **Title**: Heart Failure Clinical Data Explorer
 - **Access**: Select who should have access (e.g., "All Users" or specific groups)
 - **Environment Variables**: Add `SNOWFLAKE_USER` and `SNOWFLAKE_PASSWORD` using Connect's secure environment variable storage
 
@@ -378,7 +368,7 @@ Once publishing completes, Positron will provide a URL to your deployed applicat
 https://connect.your-company.com/content/12345/
 ```
 
-Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the climate data using natural language queries.
+Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the heart failure clinical data using natural language queries.
 
 <!-- TODO: Take screenshot and save as assets/deployed_app.png
 ![](assets/deployed_app.png)
@@ -390,7 +380,7 @@ Screenshot should show: The published dashboard running on Connect with the Conn
 
 ## Conclusion And Resources
 
-In this guide, you built a complete LLM-powered dashboard for exploring agriculture data. You set up a Snowflake database, developed a Shiny application using Positron Assistant with cthe `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
+In this guide, you built a complete LLM-powered dashboard for exploring heart failure clinical data. You set up a Snowflake database, developed a Shiny application using Positron Assistant with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
 
 This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's publishing platform creates powerful, accessible analytics applications that anyone can use through natural language.
 
@@ -407,5 +397,5 @@ This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's 
 - **Shiny**: [Documentation](https://shiny.posit.co/)
 - **Posit Workbench**: [User Guide](https://docs.posit.co/ide/server-pro/user/)
 - **Posit Connect**: [User Guide](https://docs.posit.co/connect/user/)
-- **Paddy Dataset**: [Dataset from UC Irvine](https://archive.ics.uci.edu/dataset/1186/paddy+dataset)
+- **Heart Failure Clinical Records Dataset**: [Dataset from UC Irvine](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records)
 - **Related Guides**: [Analyze Data with Python Using Posit Team](https://quickstarts.snowflake.com/guide/analyze-data-with-python-using-posit-team/)
