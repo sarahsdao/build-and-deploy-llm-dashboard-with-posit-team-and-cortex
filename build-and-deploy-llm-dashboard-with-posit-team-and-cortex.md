@@ -92,10 +92,7 @@ Now we'll create a table to hold the Heart Failure Clinical Records dataset.
 
 You should now be able to see the heart failure clinical data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `HEART_FAILURE_DATA` > `PUBLIC` > `Tables`. You should now see the `HEART_FAILURE` table.
 
-<!-- TODO: Take screenshot and save as assets/verify-data.png
-![](assets/verify-data.png)
-Screenshot should show: Query results showing agriculture data rows
--->
+![](assets/snowflake-confirm-data.png)
 
 ## Launch Posit Workbench from the Posit Team Native App
 
