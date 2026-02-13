@@ -12,9 +12,9 @@ language: en
 
 ## Overview
 
-In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore heart failure clinical data using natural language queries powered by Snowflake Cortex AI. You'll use Positron Assistant to develop a Shiny application with the `querychat` and `chatlas` packages, then deploy it to Posit Connect with one-click publishing.
+In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore U.S. chronic disease indicators using natural language queries powered by Snowflake Cortex AI. You'll use Positron Assistant to develop a Shiny application with the `querychat` and `chatlas` packages, then deploy it to Posit Connect with one-click publishing.
 
-By the end of this guide, you'll have a fully functional dashboard where users can ask questions like "What clinical factors are most associated with mortality risk in heart failure patients?" or "How do age, ejection fraction, and serum creatinine levels relate to patient survival?" and get instant visualizations and insights.
+By the end of this guide, you'll have a fully functional dashboard where users can ask questions like "Which states have the highest rates of diabetes?" or "How have smoking rates changed over time across different regions?" and get instant visualizations and insights.
 
 ### What You Will Learn
 
@@ -25,7 +25,7 @@ By the end of this guide, you'll have a fully functional dashboard where users c
 
 ### What You Will Build
 
-- A Snowflake database containing heart failure clinical records
+- A Snowflake database containing U.S. chronic disease indicators
 - An interactive Shiny dashboard with natural language query capabilities built using Cortex AI
 - A published application accessible to your team on Posit Connect
 
@@ -38,22 +38,22 @@ By the end of this guide, you'll have a fully functional dashboard where users c
 
 ## Setup
 
-In this section, we'll set up a database and warehouse in Snowflake, then load heart failure clinical data that we'll query through our LLM dashboard.
+In this section, we'll set up a database and warehouse in Snowflake, then load U.S. chronic disease indicator data that we'll query through our LLM dashboard.
 
 ### Create Database and Warehouse
 
-For this analysis, we'll use the [Heart Failure Clinical Records dataset](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records) from UC Irvine. This medical dataset contains 299 patient records with 13 clinical features that can be used to predict survival outcomes.
+For this analysis, we'll use the [U.S. Chronic Disease Indicators](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators) dataset from Data.gov. This public health dataset contains standardized indicators across multiple chronic diseases including diabetes, asthma, cancer, and cardiovascular disease, tracked across states and territories over time.
 
 In Snowsight, open a SQL worksheet (**+** > **SQL File**). Then, paste in and run the following code, which creates the necessary database, schema, and warehouse. Make sure to change the role to your own role.
 
 ```sql
 USE ROLE SYSADMIN; -- Replace with your actual Snowflake role (e.g., sysadmin)
 
-CREATE OR REPLACE DATABASE HEART_FAILURE_DATA;
+CREATE OR REPLACE DATABASE CHRONIC_DISEASE_DATA;
 
 CREATE OR REPLACE SCHEMA PUBLIC;
 
-CREATE OR REPLACE WAREHOUSE HEART_FAILURE_WH
+CREATE OR REPLACE WAREHOUSE CHRONIC_DISEASE_WH
     WAREHOUSE_SIZE = 'xsmall'
     WAREHOUSE_TYPE = 'standard'
     AUTO_SUSPEND = 60
@@ -61,38 +61,40 @@ CREATE OR REPLACE WAREHOUSE HEART_FAILURE_WH
     INITIALLY_SUSPENDED = TRUE;
 ```
 
-These commands create a database called `HEART_FAILURE_DATA` with a `PUBLIC` schema and a small warehouse called `HEART_FAILURE_WH`.
+These commands create a database called `CHRONIC_DISEASE_DATA` with a `PUBLIC` schema and a small warehouse called `CHRONIC_DISEASE_WH`.
 
 ### Load Data into Snowflake
 
-Now we'll create a table to hold the Heart Failure Clinical Records dataset.
+Now we'll create a table to hold the U.S. Chronic Disease Indicators dataset.
 
-1. Download the dataset from UCI:
-   [https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records)
+1. Download the dataset from Data.gov:
+   [https://catalog.data.gov/dataset/u-s-chronic-disease-indicators](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators)
 
-2. Unzip the downloaded file.
+2. Click the **Download** button and select the CSV format to download the file.
 
-    - You should now see a file named `heart_failure_clinical_records_dataset.csv`. We'll upload this `csv` file into Snowflake.
+    - You should now see a file named `U.S._Chronic_Disease_Indicators.csv` or similar. We'll upload this `csv` file into Snowflake.
 
 3. In Snowsight, click **Ingestion** > **Load Data into a Table**.
 
-4. Click **Browse** and choose `heart_failure_clinical_records_dataset.csv` from your machine.
+4. Click **Browse** and choose the downloaded CSV file from your machine.
 
 5. Under **Select or create a database and schema**, choose:
-   - **Database:** `HEART_FAILURE_DATA`
+   - **Database:** `CHRONIC_DISEASE_DATA`
    - **Schema:** `PUBLIC`
 
 6. Under **Select or create a table**:
    - Ensure **+ Create new table** is selected.
-   - For **Name**, enter `HEART_FAILURE`.
+   - For **Name**, enter `CHRONIC_DISEASE_INDICATORS`.
 
 7. Click **Next**, then **Load**.
 
 ### Confirm the database, data, and schema
 
-You should now be able to see the heart failure clinical data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `HEART_FAILURE_DATA` > `PUBLIC` > `Tables`. You should now see the `HEART_FAILURE` table.
+You should now be able to see the chronic disease indicator data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `CHRONIC_DISEASE_DATA` > `PUBLIC` > `Tables`. You should now see the `CHRONIC_DISEASE_INDICATORS` table.
 
+<!-- TODO update screenshot
 ![](assets/snowflake-confirm-data.png)
+-->
 
 ## Launch Posit Workbench from the Posit Team Native App
 
@@ -282,8 +284,8 @@ import pandas as pd
 # to your Snowflake account via 'connection_name="workbench"'.
 con = snowflake.connector.connect(
     connection_name="workbench",
-    warehouse="HEART_FAILURE_WH",
-    database="HEART_FAILURE_DATA",
+    warehouse="CHRONIC_DISEASE_WH",
+    database="CHRONIC_DISEASE_DATA",
     schema="PUBLIC"
 )
 
@@ -292,16 +294,89 @@ con = snowflake.connector.connect(
 # then executed efficiently in Snowflake.
 ibiscon = ibis.snowflake.from_connection(con, create_object_udfs=False)
 
-heart_failure = ibiscon.table("HEART_FAILURE")
+chronic_disease = ibiscon.table("CHRONIC_DISEASE_INDICATORS")
 
 print("Successfully established secure connection to Snowflake!")
 ```
 
-We have now used Workbench and Python to connect to our Heart Failure database and table, all securely within Snowflake.
+We have now used Workbench and Python to connect to our Chronic Disease database and table, all securely within Snowflake.
 
 ## Configure `chatlas` and `querychat`
 
-When we activated the Python virtual environment above, we installed the packages `chatlas` and `querychat`. However, we still need to [configure them to use a Cortex AI-provided LLM](https://posit-dev.github.io/chatlas/reference/ChatSnowflake.html).
+When we activated the Python virtual environment before, we installed the packages `chatlas` and `querychat`. However, we still need to configure them to use a Cortex AI-provided LLM and our chronic disease data.
+
+### `chatlas`
+
+The `chatlas` package provides a `ChatSnowflake` class that integrates with Snowflake Cortex AI. When using Posit Workbench within the Posit Team Native App, you can use the special `connection_name="workbench"` parameter to leverage Workbench's managed credentials:
+
+```python
+from chatlas import ChatSnowflake
+
+# Initialize ChatSnowflake with Workbench managed credentials
+chat = ChatSnowflake(
+    system_prompt="You are a public health data analysis expert specializing in chronic disease epidemiology",
+    model="claude-haiku-4-5", #Choose from available Cortext AI models
+    connection_name="workbench",
+)
+
+# Test the connection
+response = chat.chat("What patterns do you see in chronic disease indicators across the United States?")
+print(response)
+```
+
+When you run the cell, the reponse output will appear in the console.
+
+### `querychat`
+
+The `querychat` package creates interactive chat interfaces for data exploration. Building on the Ibis connection we established above, we can configure `querychat` to work with our chronic disease data:
+
+```python
+from querychat import QueryChat
+
+# Convert the Ibis table to a pandas DataFrame
+# This loads the data into memory for fast interactive querying
+df = chronic_disease.to_pandas()
+
+# Initialize QueryChat with the chronic disease data and Cortex AI
+qc = QueryChat(
+    data_source=df,
+    table_name="CHRONIC_DISEASE_INDICATORS",
+    client="snowflake-cortex/claude-haiku-4-5",  # Use Snowflake Cortex AI
+    greeting="""
+    # U.S. Chronic Disease Indicators Explorer
+
+    Ask questions about chronic disease trends, state comparisons, and public health patterns.
+
+    **Example questions:**
+    - Which states have the highest diabetes prevalence?
+    - How have smoking rates changed over time?
+    - Compare asthma rates across different regions
+    """,
+    data_description="""
+    U.S. Chronic Disease Indicators dataset with 115 standardized public health metrics.
+    Includes indicators for alcohol use, arthritis, asthma, cancer, COPD, cardiovascular disease,
+    diabetes, tobacco use, and other chronic conditions. Data is tracked across U.S. states and
+    territories over time, allowing for geographic and temporal trend analysis.
+    """,
+    tools=("query", "update")  # Enable both SQL queries and dashboard filtering
+)
+
+# Create the Shiny app
+app = qc.app()
+```
+
+**Configuration parameters:**
+
+- `data_source`: The pandas DataFrame containing your data (loaded via Ibis from Snowflake)
+- `table_name`: Identifier used in SQL queries (use your actual table name)
+- `client`: LLM specification in `"provider/model"` format
+  - For Snowflake Cortex AI, use `"snowflake-cortex/model-name"`
+- `greeting`: Welcome message displayed to users (supports Markdown)
+- `data_description`: Context about the dataset that helps the LLM generate accurate queries
+- `tools` Available capabilities
+  - `"query"` - SQL analysis only
+  - `"update"` - Dashboard filtering only
+
 
 ## Chat with Positron Assistant using Cortex AI
 
@@ -317,7 +392,7 @@ You can select your model based on what you have available via Cortex AI. This e
 
 Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat. Enter this prompt:
 
-> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HEART_FAILURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the heart failure clinical data. I want to be able to ask questions like, "What factors are most associated with increased risk of mortality after heart failure?"
+> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the CHRONIC_DISEASE_INDICATORS table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the U.S. chronic disease data. I want to be able to ask questions like, "Which states have the highest rates of diabetes?" or "How have asthma rates changed over the past decade?"
 
 ## Deploy to Posit Connect
 
@@ -346,7 +421,7 @@ Select the files to include:
 - [ ] .env (do not publish credential files)
 
 Choose your publishing options:
-- **Title**: Heart Failure Clinical Data Explorer
+- **Title**: U.S. Chronic Disease Indicators Explorer
 - **Access**: Select who should have access (e.g., "All Users" or specific groups)
 - **Environment Variables**: Add `SNOWFLAKE_USER` and `SNOWFLAKE_PASSWORD` using Connect's secure environment variable storage
 
@@ -365,7 +440,7 @@ Once publishing completes, Positron will provide a URL to your deployed applicat
 https://connect.your-company.com/content/12345/
 ```
 
-Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the heart failure clinical data using natural language queries.
+Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the chronic disease indicator data using natural language queries.
 
 <!-- TODO: Take screenshot and save as assets/deployed_app.png
 ![](assets/deployed_app.png)
@@ -377,7 +452,7 @@ Screenshot should show: The published dashboard running on Connect with the Conn
 
 ## Conclusion And Resources
 
-In this guide, you built a complete LLM-powered dashboard for exploring heart failure clinical data. You set up a Snowflake database, developed a Shiny application using Positron Assistant with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
+In this guide, you built a complete LLM-powered dashboard for exploring U.S. chronic disease indicators. You set up a Snowflake database, developed a Shiny application using Positron Assistant with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
 
 This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's publishing platform creates powerful, accessible analytics applications that anyone can use through natural language.
 
@@ -394,5 +469,5 @@ This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's 
 - **Shiny**: [Documentation](https://shiny.posit.co/)
 - **Posit Workbench**: [User Guide](https://docs.posit.co/ide/server-pro/user/)
 - **Posit Connect**: [User Guide](https://docs.posit.co/connect/user/)
-- **Heart Failure Clinical Records Dataset**: [Dataset from UC Irvine](https://archive.ics.uci.edu/dataset/519/heart+failure+clinical+records)
+- **U.S. Chronic Disease Indicators Dataset**: [Dataset from Data.gov](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators)
 - **Related Guides**: [Analyze Data with Python Using Posit Team](https://quickstarts.snowflake.com/guide/analyze-data-with-python-using-posit-team/)
