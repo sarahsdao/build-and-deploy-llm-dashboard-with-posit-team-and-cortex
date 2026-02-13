@@ -365,7 +365,7 @@ qc = QueryChat(
 app = qc.app()
 ```
 
-Here are the key configuration paramters explained simply:
+**Configuration parameters:**
 
 - `data_source`: The pandas DataFrame containing your data (loaded via Ibis from Snowflake)
 - `table_name`: Identifier used in SQL queries (use your actual table name)
