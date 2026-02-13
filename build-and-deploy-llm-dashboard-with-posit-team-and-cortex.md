@@ -371,7 +371,6 @@ Here are the key configuration paramters explained simply:
 - `table_name`: Identifier used in SQL queries (use your actual table name)
 - `client`: LLM specification in `"provider/model"` format
   - For Snowflake Cortex AI, use `"snowflake-cortex/model-name"`
-  - Available models: `mistral-large2`, `claude-3-7-sonnet`, `llama3.1-70b`, `llama3.1-8b`
 - `greeting`: Welcome message displayed to users (supports Markdown)
 - `data_description`: Context about the dataset that helps the LLM generate accurate queries
 - `tools` Available capabilities
