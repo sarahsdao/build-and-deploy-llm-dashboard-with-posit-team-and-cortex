@@ -312,25 +312,62 @@ The code below uses `ibis`, which lets you describe queries in Python. This syst
 
 We don't need to manage the process, it happens automatically behind the scenes.
 
+The code also uses `snowflake.connector` and `posit.connect.external.snowflake` to create a connection that works in multiple environments:
+
+- Local development: Uses explicit credentials.
+- Workbench: Leverages managed credentials via `connection_name="workbench"`.
+- Connect: Uses viewer credentials via `PositAuthenticator`, ensuring each user connects with their own Snowflake credentials, which respects Snowflake's Role-Based Access Control (RBAC).
+
 ```python
 # Import necessary libraries
+from posit.connect.external.snowflake import PositAuthenticator
 import snowflake.connector
 import ibis
-import pandas as pd
+import os
 
-# Connect to Snowflake using Workbench Managed Credentials
-# Posit Workbench automatically handles secure authentication
-# to your Snowflake account via 'connection_name="workbench"'.
-con = snowflake.connector.connect(
-    connection_name="workbench",
-    warehouse="MORTGAGE_DATA_WH",
-    database="SNOWFLAKE_PUBLIC_DATA_FREE",
-    schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
-)
+def get_connection():
+    """Create a Snowflake connection appropriate for the current environment."""
 
-# Use Ibis for a Pythonic way to interact with Snowflake data.
-# Ibis translates Python operations into SQL queries, which are
-# then executed efficiently in Snowflake.
+    # Running in Posit Workbench
+    if os.getenv("SNOWFLAKE_HOME") is not None and os.getenv("RSTUDIO_PRODUCT") != "CONNECT":
+        con = snowflake.connector.connect(
+            connection_name="workbench",
+            warehouse="MORTGAGE_DATA_WH",
+            database="SNOWFLAKE_PUBLIC_DATA_FREE",
+            schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
+        )
+
+    # Running in Posit Connect (deployed app)
+    elif os.getenv("RSTUDIO_PRODUCT") == "CONNECT":
+        from shiny import session
+
+        # Get the viewer's session token
+        user_session_token = session.http_conn.headers.get("Posit-Connect-User-Session-Token")
+
+        # Create authenticator with viewer's credentials
+        auth = PositAuthenticator(
+            local_authenticator="EXTERNALBROWSER",
+            user_session_token=user_session_token
+        )
+
+        con = snowflake.connector.connect(
+            account="YOUR_ACCOUNT",  # Replace with your Snowflake account
+            warehouse="MORTGAGE_DATA_WH",
+            database="SNOWFLAKE_PUBLIC_DATA_FREE",
+            schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES",
+            authenticator=auth.authenticator,
+            token=auth.token,
+        )
+
+    else:
+        raise ValueError("No Snowflake credentials found. Ensure you're running in Workbench or Connect.")
+
+    return con
+
+# Create connection
+con = get_connection()
+
+# Use Ibis for a Pythonic way to interact with Snowflake data
 ibiscon = ibis.snowflake.from_connection(con, create_object_udfs=False)
 
 mortgage_data = ibiscon.table("HOME_MORTGAGE_DISCLOSURE")
@@ -530,6 +567,21 @@ Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat
 
 Now that your dashboard works locally, let's deploy it to Connect so your team can access it. Deployment is a one-click process. Because Workbench and Connect run within the same Native App, the complex network and authentication challenges are eliminated. Once you click “Deploy” in Positron, Connect handles dependency management and ensures your code runs successfully as a deployed artifact.
 
+### Configure Connect Publishing
+
+In Positron, open the command palette (Cmd/Ctrl+Shift+P) and search for "Publish to Connect". If this is your first time publishing, you'll need to configure your Connect server.
+
+Click the "Add Server" button and enter:
+- **Server URL**: Your Posit Connect server address (e.g., `https://connect.your-company.com`)
+- **API Key**: Generate an API key from your Connect account settings
+
+<!-- TODO: Take screenshot and save as assets/add_server.png
+![](assets/add_server.png)
+Screenshot should show: The Add Server dialog in Positron with server URL and API key fields
+-->
+
+### Publish Your Dashboard
+
 With your `app.py` file open, click the **Deploy** button in the top left corner of Positron, or use the command palette (Cmd/Ctrl+Shift+P) to run "Publish Content".
 
 Select the files to include:
@@ -540,7 +592,6 @@ Select the files to include:
 Choose your publishing options:
 - **Title**: HMDA Mortgage Data Explorer
 - **Access**: Select who should have access (e.g., "All Users" or specific groups)
-- **Environment Variables**: Add `SNOWFLAKE_USER` and `SNOWFLAKE_PASSWORD` using Connect's secure environment variable storage
 
 Click **Publish** to deploy your dashboard to Connect.
 
@@ -564,8 +615,7 @@ Click the link to open your dashboard. You can now share this URL with your team
 Screenshot should show: The published dashboard running on Connect with the Connect URL visible
 -->
 
-> **Note:** Your dashboard will automatically reconnect to Snowflake using the environment variables you configured in Connect. Make sure your Snowflake credentials have appropriate permissions for end users to query the data.
-
+> **Note:** Your dashboard will automatically reconnect to Snowflake using viewer-level authentication. Each user who accesses the content will connect with their own Snowflake credentials, ensuring they only see data they have permission to access.
 
 ## Conclusion And Resources
 
