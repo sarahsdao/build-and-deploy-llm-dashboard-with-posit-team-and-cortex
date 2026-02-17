@@ -12,9 +12,9 @@ language: en
 
 ## Overview
 
-In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore U.S. chronic disease indicators using natural language queries powered by Snowflake Cortex AI. We'll use Positron Assistant and Databot to do some quick, yet powerful exploratory data analysis and develop a Shiny application using the `querychat` and `chatlas` Python packages. Along the way, we'll deploy two data analysis products (a Quarto report and the interactive dashboard) to Posit Connect with one-click publishing for easy sharing across our organization.
+In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore Home Mortgage Disclosure Act (HMDA) data using natural language queries powered by Snowflake Cortex AI. We'll use Positron Assistant and Databot to do some quick, yet powerful exploratory data analysis and develop a Shiny application using the `querychat` and `chatlas` Python packages. Along the way, we'll deploy two data analysis products (a Quarto report and the interactive dashboard) to Posit Connect with one-click publishing for easy sharing across our organization.
 
-By the end of this guide, we'll have a fully functional dashboard where users can ask questions like "Which states have the highest rates of diabetes?" or "How have smoking rates changed over time across different regions?" and get instant visualizations and insights.
+By the end of this guide, we'll have a fully functional dashboard where users can ask questions like "What are the most common loan types?" or "How do loan approval rates vary by state?" and get instant visualizations and insights.
 
 ### What You Will Learn
 
@@ -25,7 +25,7 @@ By the end of this guide, we'll have a fully functional dashboard where users ca
 
 ### What You Will Build
 
-- A Snowflake database containing U.S. chronic disease indicators
+- A Snowflake warehouse to query publicly available HMDA mortgage data
 - An interactive Shiny dashboard with natural language query capabilities built using Cortex AI
 - A published application accessible to your team on Posit Connect
 
@@ -38,22 +38,18 @@ By the end of this guide, we'll have a fully functional dashboard where users ca
 
 ## Setup
 
-In this section, we'll set up a database and warehouse in Snowflake, then load U.S. chronic disease indicator data that we'll query through our LLM dashboard.
+In this section, we'll create a warehouse in Snowflake and access a publicly available dataset that we'll query through our LLM dashboard.
 
-### Create Database and Warehouse
+### Create a Warehouse
 
-For this analysis, we'll use the [U.S. Chronic Disease Indicators](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators) dataset from Data.gov. This public health dataset contains standardized indicators across multiple chronic diseases including diabetes, asthma, cancer, and cardiovascular disease, tracked across states and territories over time.
+For this analysis, we'll use the Home Mortgage Disclosure Act (HMDA) dataset from Snowflake's free public data. This dataset contains mortgage application and origination data collected under the Home Mortgage Disclosure Act, including information about loan types, applicant demographics, property characteristics, and loan outcomes across different geographic areas.
 
-In Snowsight, open a SQL worksheet (**+** > **SQL File**). Then, paste in and run the following code, which creates the necessary database, schema, and warehouse. Make sure to change the role to your own role.
+In Snowsight, open a SQL worksheet (**+** > **SQL File**). Then, paste in and run the following code, which creates a warehouse for our analysis. Make sure to change the role to your own role.
 
 ```sql
 USE ROLE SYSADMIN; -- Replace with your actual Snowflake role (e.g., sysadmin)
 
-CREATE OR REPLACE DATABASE CHRONIC_DISEASE_DATA;
-
-CREATE OR REPLACE SCHEMA PUBLIC;
-
-CREATE OR REPLACE WAREHOUSE CHRONIC_DISEASE_WH
+CREATE OR REPLACE WAREHOUSE MORTGAGE_DATA_WH
     WAREHOUSE_SIZE = 'xsmall'
     WAREHOUSE_TYPE = 'standard'
     AUTO_SUSPEND = 60
@@ -61,40 +57,25 @@ CREATE OR REPLACE WAREHOUSE CHRONIC_DISEASE_WH
     INITIALLY_SUSPENDED = TRUE;
 ```
 
-These commands create a database called `CHRONIC_DISEASE_DATA` with a `PUBLIC` schema and a small warehouse called `CHRONIC_DISEASE_WH`.
+This command creates a small warehouse called `MORTGAGE_DATA_WH` that will be used to query the public dataset.
 
-### Load Data into Snowflake
+### Access the Public Dataset
 
-Now we'll create a table to hold the U.S. Chronic Disease Indicators dataset.
+The HMDA data is available in Snowflake's free public data collection, which is accessible to all Snowflake accounts without any additional setup. The dataset we'll use is located at:
 
-1. Download the dataset from Data.gov:
-   [https://catalog.data.gov/dataset/u-s-chronic-disease-indicators](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators)
+- **Database:** `SNOWFLAKE_PUBLIC_DATA_FREE`
+- **Schema:** `HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES`
+- **Table:** `HOME_MORTGAGE_DISCLOSURE`
 
-2. Click the **Download** button and select the CSV format to download the file.
+To verify you have access to this data, run the following query in your SQL worksheet:
 
-    - You should now see a file named `U.S._Chronic_Disease_Indicators.csv` or similar. We'll upload this `csv` file into Snowflake.
+```sql
+SELECT *
+FROM SNOWFLAKE_PUBLIC_DATA_FREE.HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES.HOME_MORTGAGE_DISCLOSURE
+LIMIT 10;
+```
 
-3. In Snowsight, click **Ingestion** > **Load Data into a Table**.
-
-4. Click **Browse** and choose the downloaded CSV file from your machine.
-
-5. Under **Select or create a database and schema**, choose:
-   - **Database:** `CHRONIC_DISEASE_DATA`
-   - **Schema:** `PUBLIC`
-
-6. Under **Select or create a table**:
-   - Ensure **+ Create new table** is selected.
-   - For **Name**, enter `CHRONIC_DISEASE_INDICATORS`.
-
-7. Click **Next**, then **Load**.
-
-### Confirm the database, data, and schema
-
-You should now be able to see the chronic disease indicator data in Snowsight. Navigate to **Horizon Catalog** > **Catalog** > **Database Explorer** > `CHRONIC_DISEASE_DATA` > `PUBLIC` > `Tables`. You should now see the `CHRONIC_DISEASE_INDICATORS` table.
-
-<!-- TODO update screenshot
-![](assets/snowflake-confirm-data.png)
--->
+You should see the first 10 rows of the HMDA dataset, which includes columns about mortgage applications, loan details, applicant information, and property characteristics.
 
 ## Launch Posit Workbench from the Posit Team Native App
 
@@ -164,6 +145,8 @@ Then, click **Launch** to launch Positron Pro. If desired, you can check the **A
 You will now be able to work with your Snowflake data in Positron Pro. Since the IDE is provided
 by Posit Workbench within the Posit Team Native App, your entire analysis will occur securely within Snowflake.
 
+## Install the Necessary Extensions
+
 ## Get the Shiny Extension
 
 The Shiny VS Code extension supports the development of Shiny apps in Positron. The Shiny Extension is included automatically in Positron as a [bootstrapped extension](https://positron.posit.co/extensions.html#bootstrapped-extensions).
@@ -183,6 +166,24 @@ We'll want Positron Assistant to be able to create a Shiny app to make and share
 
 For more information, see the [Shiny extension documentation](https://open-vsx.org/extension/posit/shiny).
 
+### Get and Enable the Databot Extension
+
+> **Important:** Databot is currently in research preview and not ready for production use.
+
+[Databot](https://positron.posit.co/databot.html) is an AI assistant designed to dramatically accelerate exploratory data analysis for data scientists fluent in Python or R, allowing them to do in minutes what might usually take hours. We'll use it below to both connect to our Snowflake data and conduct some exploratory data analysis (EDA).
+
+1. Open the Positron Extensions view: on the right-hand side of Positron Pro, click the Extensions icon in the activity bar to open the Extensions Marketplace.
+
+2. Search for "Databot".
+
+3. Click **Install** to add the Databot extension.
+
+4. After installation, you'll need to acknowledge the research preview status:
+   - Open Settings (`Cmd/Ctrl+,`).
+   - Search for "Databot".
+   - In the **Databot: Research Preview Acknowledgement** field, type "Acknowledged".
+
+<!-- UPDATE FOR MORTAGE DATA
 ## Access this Guide's Materials
 
 This guide will walk you through the steps contained in <https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard>. To follow along, clone the repository by following the steps below.
@@ -209,9 +210,11 @@ This guide will walk you through the steps contained in <https://github.com/posi
    - Select **File: Open Folder**.
    - Navigate to `snowflake-posit-build-deploy-LLM-dashboard` and click **OK**.
 
+-->
+
 ## Explore Quarto
 
-Before we dive into our data analysis, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd), and we'll also create a Quarto document with exploratory data analysis in the [Databot]() section below.
+Before we dive into our data analysis, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd), and we'll also create a Quarto document with exploratory data analysis in the [Databot](#explore-the-data-with-databot) section below.
 
 [Quarto](https://quarto.org/)
 is an open-source publishing system that makes it easy to create
@@ -261,7 +264,43 @@ Before we can run any code, we need to set up our Python virtual environment.
 
 ## Connect to Snowflake Data
 
-Now that we have our Positron Pro session started with the necessary extensions and dependencies, we can connect to our data in Snowflake.
+Now that we have our Positron Pro session started with the necessary extensions and dependencies, we can connect to our data in Snowflake. There are two ways we can do this: automatically using Databot, or manually with some code.
+
+### Use Databot to Connect
+
+Instead of manually writing connection code, you can use Databot's built-in Snowflake skill to guide you through the connection process. This is
+especially helpful when you're working in Posit Workbench, as Databot can automatically detect and use managed credentials.
+
+In the Databot panel, simply ask:
+
+```
+Help me connect to Snowflake
+```
+
+Databot will:
+
+1. Detect if you're in Posit Workbench with integrated authentication.
+
+2. Provide the appropriate connection code for your environment,
+
+3. Guide you through discovering available databases, schemas, and tables.
+
+4. Help you explore Semantic Views if available.
+
+If you're in Posit Workbench, Databot will provide zero-argument connection code that uses managed credentials:
+
+```python
+import snowflake.connector
+
+# Uses Workbench managed credentials automatically
+conn = snowflake.connector.connect(connection_name='workbench')
+```
+
+If you're not in Posit Workbench, Databot will prompt you for connection details and provide the appropriate connection code.
+
+Once connected, you can move on to the next section, which is to [configure the `querychat` and `chatlas` packages to use your Cortex AI-provided LLM](#configure-chatlas-and-querychat).
+
+### Connect with Code
 
 Open the `quarto.qmd` file from `snowflake-posit-build-deploy-LLM-dashboard`. You can now use the **Run Cell** button to run the Python code directly in the Quarto document.
 
@@ -284,9 +323,9 @@ import pandas as pd
 # to your Snowflake account via 'connection_name="workbench"'.
 con = snowflake.connector.connect(
     connection_name="workbench",
-    warehouse="CHRONIC_DISEASE_WH",
-    database="CHRONIC_DISEASE_DATA",
-    schema="PUBLIC"
+    warehouse="MORTGAGE_DATA_WH",
+    database="SNOWFLAKE_PUBLIC_DATA_FREE",
+    schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
 )
 
 # Use Ibis for a Pythonic way to interact with Snowflake data.
@@ -294,16 +333,16 @@ con = snowflake.connector.connect(
 # then executed efficiently in Snowflake.
 ibiscon = ibis.snowflake.from_connection(con, create_object_udfs=False)
 
-chronic_disease = ibiscon.table("CHRONIC_DISEASE_INDICATORS")
+mortgage_data = ibiscon.table("HOME_MORTGAGE_DISCLOSURE")
 
 print("Successfully established secure connection to Snowflake!")
 ```
 
-We have now used Workbench and Python to connect to our Chronic Disease database and table, all securely within Snowflake.
+We have now used Workbench and Python to connect to the HMDA mortgage data in Snowflake's public datasets, all securely within Snowflake.
 
 ## Configure `chatlas` and `querychat`
 
-When we activated the Python virtual environment before, we installed the packages `chatlas` and `querychat`. However, we still need to configure them to use a Cortex AI-provided LLM and our chronic disease data.
+When we activated the Python virtual environment before, we installed the packages `chatlas` and `querychat`. However, we still need to configure them to use a Cortex AI-provided LLM and our mortgage data.
 
 ### `chatlas`
 
@@ -314,13 +353,13 @@ from chatlas import ChatSnowflake
 
 # Initialize ChatSnowflake with Workbench managed credentials
 chat = ChatSnowflake(
-    system_prompt="You are a public health data analysis expert specializing in chronic disease epidemiology",
+    system_prompt="You are a mortgage lending and housing finance data analysis expert",
     model="claude-haiku-4-5", #Choose from available Cortext AI models
     connection_name="workbench",
 )
 
 # Test the connection
-response = chat.chat("What patterns do you see in chronic disease indicators across the United States?")
+response = chat.chat("What patterns do you see in home mortgage lending data?")
 print(response)
 ```
 
@@ -328,35 +367,35 @@ When you run the cell, the reponse output will appear in the console.
 
 ### `querychat`
 
-The `querychat` package creates interactive chat interfaces for data exploration. Building on the Ibis connection we established above, we can configure `querychat` to work with our chronic disease data:
+The `querychat` package creates interactive chat interfaces for data exploration. Building on the Ibis connection we established above, we can configure `querychat` to work with our mortgage data:
 
 ```python
 from querychat import QueryChat
 
 # Convert the Ibis table to a pandas DataFrame
 # This loads the data into memory for fast interactive querying
-df = chronic_disease.to_pandas()
+df = mortgage_data.to_pandas()
 
-# Initialize QueryChat with the chronic disease data and Cortex AI
+# Initialize QueryChat with the mortgage data and Cortex AI
 qc = QueryChat(
     data_source=df,
-    table_name="CHRONIC_DISEASE_INDICATORS",
+    table_name="HOME_MORTGAGE_DISCLOSURE",
     client="snowflake-cortex/claude-haiku-4-5",  # Use Snowflake Cortex AI
     greeting="""
-    # U.S. Chronic Disease Indicators Explorer
+    # Home Mortgage Disclosure Act (HMDA) Data Explorer
 
-    Ask questions about chronic disease trends, state comparisons, and public health patterns.
+    Ask questions about mortgage lending patterns, loan characteristics, and geographic trends.
 
     **Example questions:**
-    - Which states have the highest diabetes prevalence?
-    - How have smoking rates changed over time?
-    - Compare asthma rates across different regions
+    - What are the most common loan types?
+    - How do loan approval rates vary by state?
+    - Compare loan amounts across different property types
     """,
     data_description="""
-    U.S. Chronic Disease Indicators dataset with 115 standardized public health metrics.
-    Includes indicators for alcohol use, arthritis, asthma, cancer, COPD, cardiovascular disease,
-    diabetes, tobacco use, and other chronic conditions. Data is tracked across U.S. states and
-    territories over time, allowing for geographic and temporal trend analysis.
+    Home Mortgage Disclosure Act (HMDA) dataset containing mortgage application and origination data.
+    Includes information about loan types, applicant demographics, property characteristics, loan amounts,
+    interest rates, and loan outcomes. Data is tracked across U.S. geographic areas, allowing for
+    analysis of lending patterns and trends.
     """,
     tools=("query", "update")  # Enable both SQL queries and dashboard filtering
 )
@@ -377,24 +416,9 @@ app = qc.app()
   - `"query"` - SQL analysis only
   - `"update"` - Dashboard filtering only
 
-## Explore Your Data with Databot
+## Explore the Data with Databot
 
-Before building our dashboard, let's use Databot to explore the chronic disease data. Databot is an experimental AI assistant that dramatically accelerates exploratory data analysis (EDA), enabling you to complete analyses in minutes rather than hours. Unlike general coding assistants, Databot is purpose-built for EDA with rapid iteration of short code snippets that execute quickly.
-
-> **Important:** Databot is currently in research preview and not ready for production use.
-
-### Install the Databot Extension
-
-1. In Positron Pro, choose the Extensions view from the Activity Bar on the left or use the keyboard shortcut **⌘⇧X**.
-
-2. Search for "Databot" in the Extensions Marketplace.
-
-3. Click **Install** to add the Databot extension.
-
-4. After installation, you'll need to acknowledge the research preview status:
-   - Open Settings (`Cmd/Ctrl+,`)
-   - Search for "Databot"
-   - In the **Databot: Research Preview Acknowledgement** field, type "Acknowledged"
+Before building our dashboard, let's use Databot to explore the mortgage data. Databot is an experimental AI assistant that dramatically accelerates exploratory data analysis (EDA), enabling you to complete analyses in minutes rather than hours. Unlike general coding assistants, Databot is purpose-built for EDA with rapid iteration of short code snippets that execute quickly.
 
 ### Open Databot
 
@@ -402,36 +426,36 @@ Before building our dashboard, let's use Databot to explore the chronic disease 
 
 2. Type "Open Databot" and select it.
 
-3. The Databot panel will open, ready to analyze your chronic disease data.
+3. The Databot panel will open, ready to analyze your mortgage data.
 
-### Explore the Chronic Disease Data
+### Explore the Mortgage Data
 
-With your connection to the `CHRONIC_DISEASE_INDICATORS` table established (from the previous section), you can now ask Databot to explore the data. Try these prompts:
+With your connection to the `HOME_MORTGAGE_DISCLOSURE` table established (from the previous section), you can now ask Databot to explore the data. Try these prompts:
 
 **Understand the dataset structure:**
 ```
-Explore the chronic_disease data and summarize its structure
+Explore the mortgage_data and summarize its structure
 ```
 
 Databot will generate and execute code to show you the columns, data types, and basic statistics.
 
 **Investigate specific patterns:**
 ```
-Explore the relationship between diabetes prevalence and state
+Explore the relationship between loan amounts and property types
 ```
 
-Databot will create visualizations and statistical summaries to help you understand geographic patterns.
+Databot will create visualizations and statistical summaries to help you understand lending patterns.
 
-**Compare trends over time:**
+**Compare trends across geography:**
 ```
-How have smoking rates changed over time across different regions?
+How do loan approval rates vary across different states?
 ```
 
-Databot will analyze temporal trends and create appropriate visualizations.
+Databot will analyze geographic patterns and create appropriate visualizations.
 
 **Identify data quality issues:**
 ```
-Check for missing values and data quality issues in the chronic disease indicators
+Check for missing values and data quality issues in the mortgage data
 ```
 
 Databot will examine the dataset for completeness and potential problems.
@@ -452,7 +476,7 @@ Once you've explored the data with Databot, you can have Databot create a Quarto
 Ask Databot to create the report:
 
 ```
-Create a .qmd file summarizing the chronic disease data exploration
+Create a .qmd file summarizing the mortgage data exploration
 ```
 
 Databot will generate a Quarto document that includes:
@@ -473,19 +497,18 @@ After Databot creates the file:
    - Select your `.qmd` file
    - Configure publishing options and click **Publish**
 
-Your EDA report will now be accessible to your team on Posit Connect, providing context and insights before they use the interactive dashboard.
+Your EDA report will now be accessible to your team on Connect, providing context and insights before they use the interactive dashboard.
 
 ### Key Insights to Look For
 
 As you explore the data with Databot, consider these questions:
 
-- **Geographic patterns:** Which states or regions have the highest/lowest rates of specific conditions?
-- **Temporal trends:** How have rates changed over time?
-- **Correlations:** Do certain chronic diseases appear together?
-- **Data coverage:** Which indicators have the most complete data across states and years?
+- **Geographic patterns:** Which states or regions have the highest/lowest loan volumes or approval rates?
+- **Loan characteristics:** What are the typical loan amounts, interest rates, and loan types?
+- **Property patterns:** How do lending patterns vary by property type (single-family, multifamily, etc.)?
+- **Data coverage:** Which fields have the most complete data across geographic areas?
 
 These insights will help you understand the dataset and inform how you build the interactive dashboard in the next section.
-
 
 ## Chat with Positron Assistant using Cortex AI
 
@@ -501,28 +524,13 @@ You can select your model based on what you have available via Cortex AI. This e
 
 Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat. Enter this prompt:
 
-> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the CHRONIC_DISEASE_INDICATORS table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the U.S. chronic disease data. I want to be able to ask questions like, "Which states have the highest rates of diabetes?" or "How have asthma rates changed over the past decade?"
+> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HOME_MORTGAGE_DISCLOSURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the HMDA mortgage data. I want to be able to ask questions like, "What are the most common loan types?" or "How do loan approval rates vary by state?"
 
 ## Deploy to Posit Connect
 
-Now that your dashboard works locally, let's deploy it to Posit Connect so your team can access it.
+Now that your dashboard works locally, let's deploy it to Connect so your team can access it. Deployment is a one-click process. Because Workbench and Connect run within the same Native App, the complex network and authentication challenges are eliminated. Once you click “Deploy” in Positron, Connect handles dependency management and ensures your code runs successfully as a deployed artifact.
 
-### Configure Connect Publishing
-
-In Positron, open the command palette (Cmd/Ctrl+Shift+P) and search for "Publish to Connect". If this is your first time publishing, you'll need to configure your Connect server.
-
-Click the "Add Server" button and enter:
-- **Server URL**: Your Posit Connect server address (e.g., `https://connect.your-company.com`)
-- **API Key**: Generate an API key from your Connect account settings
-
-<!-- TODO: Take screenshot and save as assets/add_server.png
-![](assets/add_server.png)
-Screenshot should show: The Add Server dialog in Positron with server URL and API key fields
--->
-
-### Publish Your Dashboard
-
-With your `app.py` file open, click the "Publish" button in the top right corner of Positron, or use the command palette to run "Publish Content".
+With your `app.py` file open, click the **Deploy** button in the top left corner of Positron, or use the command palette (Cmd/Ctrl+Shift+P) to run "Publish Content".
 
 Select the files to include:
 - [x] app.py
@@ -530,7 +538,7 @@ Select the files to include:
 - [ ] .env (do not publish credential files)
 
 Choose your publishing options:
-- **Title**: U.S. Chronic Disease Indicators Explorer
+- **Title**: HMDA Mortgage Data Explorer
 - **Access**: Select who should have access (e.g., "All Users" or specific groups)
 - **Environment Variables**: Add `SNOWFLAKE_USER` and `SNOWFLAKE_PASSWORD` using Connect's secure environment variable storage
 
@@ -549,7 +557,7 @@ Once publishing completes, Positron will provide a URL to your deployed applicat
 https://connect.your-company.com/content/12345/
 ```
 
-Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the chronic disease indicator data using natural language queries.
+Click the link to open your dashboard. You can now share this URL with your team, and they can interact with the HMDA mortgage data using natural language queries.
 
 <!-- TODO: Take screenshot and save as assets/deployed_app.png
 ![](assets/deployed_app.png)
@@ -561,9 +569,9 @@ Screenshot should show: The published dashboard running on Connect with the Conn
 
 ## Conclusion And Resources
 
-In this guide, you built a complete LLM-powered dashboard for exploring U.S. chronic disease indicators. You set up a Snowflake database, developed a Shiny application using Positron Assistant with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
+In this guide, we built a complete LLM-powered dashboard for exploring HMDA mortgage data. We created a Snowflake warehouse to query public data, developed a Shiny application using Positron Assistant and Databot with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
 
-This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's publishing platform creates powerful, accessible analytics applications that anyone can use through natural language.
+This pattern of combining Snowflake's public datasets with Cortex AI and Posit's publishing platform creates powerful, accessible analytics applications that anyone can use through natural language.
 
 ### What You Learned
 
@@ -572,11 +580,12 @@ This pattern of combining Snowflake's data warehouse with Cortex AI and Posit's 
 ### Resources
 
 - **Snowflake Cortex AI Documentation**: [Cortex AI Functions](https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions)
+- **Snowflake Public Data**: [Using Snowflake Data Marketplace](https://docs.snowflake.com/en/user-guide/data-marketplace)
 - **Positron**: [Positron Documentation](https://positron.posit.co/)
+- **Databot**: [Databot Documentation](https://positron.posit.co/databot.html)
 - **`chatlas` Package**: [Documentation](https://posit-dev.github.io/chatlas/)
 - **`querychat` Package**: [Documentation](https://posit-dev.github.io/querychat/py/index.html)
 - **Shiny**: [Documentation](https://shiny.posit.co/)
 - **Posit Workbench**: [User Guide](https://docs.posit.co/ide/server-pro/user/)
 - **Posit Connect**: [User Guide](https://docs.posit.co/connect/user/)
-- **U.S. Chronic Disease Indicators Dataset**: [Dataset from Data.gov](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators)
 - **Related Guides**: [Analyze Data with Python Using Posit Team](https://quickstarts.snowflake.com/guide/analyze-data-with-python-using-posit-team/)
