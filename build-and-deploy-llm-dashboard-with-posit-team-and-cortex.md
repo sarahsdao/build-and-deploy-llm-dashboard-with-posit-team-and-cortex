@@ -12,16 +12,16 @@ language: en
 
 ## Overview
 
-In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore U.S. chronic disease indicators using natural language queries powered by Snowflake Cortex AI. You'll use Positron Assistant to develop a Shiny application with the `querychat` and `chatlas` packages, then deploy it to Posit Connect with one-click publishing.
+In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore U.S. chronic disease indicators using natural language queries powered by Snowflake Cortex AI. We'll use Positron Assistant and Databot to do some quick, yet powerful exploratory data analysis and develop a Shiny application using the `querychat` and `chatlas` Python packages. Along the way, we'll deploy two data analysis products (a Quarto report and the interactive dashboard) to Posit Connect with one-click publishing for easy sharing across our organization.
 
-By the end of this guide, you'll have a fully functional dashboard where users can ask questions like "Which states have the highest rates of diabetes?" or "How have smoking rates changed over time across different regions?" and get instant visualizations and insights.
+By the end of this guide, we'll have a fully functional dashboard where users can ask questions like "Which states have the highest rates of diabetes?" or "How have smoking rates changed over time across different regions?" and get instant visualizations and insights.
 
 ### What You Will Learn
 
 - How to securely connect to your Snowflake databases from Posit Workbench and the Positron Pro IDE
-- How to leverage Cortex AI using Positron Assistant to build a Shiny application
+- How to leverage Cortex AI using Databot Positron Assistant to build a Quarto report and Shiny application
 - How to create an LLM-powered chat interface for data exploration
-- How to deploy the dashboard to Posit Connect with one-click publishing
+- How to deploy the report and dashboard to Posit Connect with one-click publishing
 
 ### What You Will Build
 
@@ -209,9 +209,9 @@ This guide will walk you through the steps contained in <https://github.com/posi
    - Select **File: Open Folder**.
    - Navigate to `snowflake-posit-build-deploy-LLM-dashboard` and click **OK**.
 
-### Explore Quarto
+## Explore Quarto
 
-Before we dive into the steps in the repository, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd).
+Before we dive into our data analysis, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd), and we'll also create a Quarto document with exploratory data analysis in the [Databot]() section below.
 
 [Quarto](https://quarto.org/)
 is an open-source publishing system that makes it easy to create
@@ -376,6 +376,115 @@ app = qc.app()
 - `tools` Available capabilities
   - `"query"` - SQL analysis only
   - `"update"` - Dashboard filtering only
+
+## Explore Your Data with Databot
+
+Before building our dashboard, let's use Databot to explore the chronic disease data. Databot is an experimental AI assistant that dramatically accelerates exploratory data analysis (EDA), enabling you to complete analyses in minutes rather than hours. Unlike general coding assistants, Databot is purpose-built for EDA with rapid iteration of short code snippets that execute quickly.
+
+> **Important:** Databot is currently in research preview and not ready for production use.
+
+### Install the Databot Extension
+
+1. In Positron Pro, choose the Extensions view from the Activity Bar on the left or use the keyboard shortcut **⌘⇧X**.
+
+2. Search for "Databot" in the Extensions Marketplace.
+
+3. Click **Install** to add the Databot extension.
+
+4. After installation, you'll need to acknowledge the research preview status:
+   - Open Settings (`Cmd/Ctrl+,`)
+   - Search for "Databot"
+   - In the **Databot: Research Preview Acknowledgement** field, type "Acknowledged"
+
+### Open Databot
+
+1. Open the Command Palette (`Cmd/Ctrl+Shift+P`).
+
+2. Type "Open Databot" and select it.
+
+3. The Databot panel will open, ready to analyze your chronic disease data.
+
+### Explore the Chronic Disease Data
+
+With your connection to the `CHRONIC_DISEASE_INDICATORS` table established (from the previous section), you can now ask Databot to explore the data. Try these prompts:
+
+**Understand the dataset structure:**
+```
+Explore the chronic_disease data and summarize its structure
+```
+
+Databot will generate and execute code to show you the columns, data types, and basic statistics.
+
+**Investigate specific patterns:**
+```
+Explore the relationship between diabetes prevalence and state
+```
+
+Databot will create visualizations and statistical summaries to help you understand geographic patterns.
+
+**Compare trends over time:**
+```
+How have smoking rates changed over time across different regions?
+```
+
+Databot will analyze temporal trends and create appropriate visualizations.
+
+**Identify data quality issues:**
+```
+Check for missing values and data quality issues in the chronic disease indicators
+```
+
+Databot will examine the dataset for completeness and potential problems.
+
+### Review Generated Code
+
+As Databot works, it will show you the code it generates before executing it. Review this code to:
+
+- Verify the analysis approach is appropriate
+- Understand the transformations being applied
+- Learn techniques you can reuse in your own work
+- Catch any potential issues before execution
+
+### Create a Quarto Report from Your Exploration
+
+Once you've explored the data with Databot, you can have Databot create a Quarto report that captures your findings and can be published to Connect.
+
+Ask Databot to create the report:
+
+```
+Create a .qmd file summarizing the chronic disease data exploration
+```
+
+Databot will generate a Quarto document that includes:
+- The code from your exploration organized into executable chunks
+- Narrative text explaining the analyses and findings
+- Visualizations and results from your data exploration
+
+After Databot creates the file:
+
+1. Review the generated `.qmd` file to verify the content and narrative.
+
+2. Render the report to preview it:
+   - Click the **Preview** button, or
+   - Run `quarto preview <filename>.qmd` in the terminal
+
+3. Publish the report to Posit Connect to share with your team:
+   - Open the Command Palette (`Cmd/Ctrl+Shift+P`) and select **Publish to Connect**
+   - Select your `.qmd` file
+   - Configure publishing options and click **Publish**
+
+Your EDA report will now be accessible to your team on Posit Connect, providing context and insights before they use the interactive dashboard.
+
+### Key Insights to Look For
+
+As you explore the data with Databot, consider these questions:
+
+- **Geographic patterns:** Which states or regions have the highest/lowest rates of specific conditions?
+- **Temporal trends:** How have rates changed over time?
+- **Correlations:** Do certain chronic diseases appear together?
+- **Data coverage:** Which indicators have the most complete data across states and years?
+
+These insights will help you understand the dataset and inform how you build the interactive dashboard in the next section.
 
 
 ## Chat with Positron Assistant using Cortex AI
