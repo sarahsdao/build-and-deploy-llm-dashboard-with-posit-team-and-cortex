@@ -19,7 +19,7 @@ By the end of this guide, we'll have a fully functional dashboard where users ca
 ### What You Will Learn
 
 - How to securely connect to your Snowflake databases from Posit Workbench and the Positron Pro IDE
-- How to leverage Cortex AI using Databot Positron Assistant to build a Quarto report and Shiny application
+- How to leverage Cortex AI using Databot and Positron Assistant to build a Quarto report and Shiny application
 - How to create an LLM-powered chat interface for data exploration
 - How to deploy the report and dashboard to Posit Connect with one-click publishing
 
@@ -94,7 +94,7 @@ We can now start exploring the data using Workbench. You can find Workbench with
 
 Please note that your administrator must first [install and configure](https://docs.posit.co/partnerships/snowflake/posit-team/) the Posit Team Native App--and Posit Workbench within it--before you can follow the remaining steps.
 
-Once your administrator has installed and configred the Posit Team Native App, in Snowsight, navigate to **Horizon Catalog** > **Catalog** > **Installed Apps** > the Posit Team Native App. If you do not see the Posit Team Native App listed, ask your Snowflake account administrator for access to the app.
+Once your administrator has installed and configured the Posit Team Native App, in Snowsight, navigate to **Horizon Catalog** > **Catalog** > **Installed Apps** > the Posit Team Native App. If you do not see the Posit Team Native App listed, ask your Snowflake account administrator for access to the app.
 
 After clicking on the app, you will see the Posit Team Native App page.
 
@@ -138,7 +138,7 @@ Under **Session Credentials**, click the button with the Snowflake icon to sign 
 
 Under **Environment**, enter at least 2.5 GB of RAM in the **Memory (GB)** field.
 
-Then, click **Launch** to launch Positron Pro. If desired, you can check the **Auto-join sesssion** option to automatically open the IDE when the session is ready.
+Then, click **Launch** to launch Positron Pro. If desired, you can check the **Auto-join session** option to automatically open the IDE when the session is ready.
 
 ![](assets/positron-launch.png)
 
@@ -147,7 +147,7 @@ by Posit Workbench within the Posit Team Native App, your entire analysis will o
 
 ## Install the Necessary Extensions
 
-## Get the Shiny Extension
+### Get the Shiny Extension
 
 The Shiny VS Code extension supports the development of Shiny apps in Positron. The Shiny Extension is included automatically in Positron as a [bootstrapped extension](https://positron.posit.co/extensions.html#bootstrapped-extensions).
 
@@ -162,7 +162,7 @@ We'll want Positron Assistant to be able to create a Shiny app to make and share
 3. Verify that you have the Shiny extension:
   - If it is already installed and enabled, you will see a wheel icon.
   - If it is not already installed, click **Install**.
-  - If you cannot install it yourself or you find that the extestion is disabled, ask your administrator for acccess.
+  - If you cannot install it yourself or you find that the extension is disabled, ask your administrator for access.
 
 For more information, see the [Shiny extension documentation](https://open-vsx.org/extension/posit/shiny).
 
@@ -183,7 +183,6 @@ For more information, see the [Shiny extension documentation](https://open-vsx.o
    - Search for "Databot".
    - In the **Databot: Research Preview Acknowledgement** field, type "Acknowledged".
 
-<!-- UPDATE FOR MORTAGE DATA
 ## Access this Guide's Materials
 
 This guide will walk you through the steps contained in <https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard>. To follow along, clone the repository by following the steps below.
@@ -210,7 +209,6 @@ This guide will walk you through the steps contained in <https://github.com/posi
    - Select **File: Open Folder**.
    - Navigate to `snowflake-posit-build-deploy-LLM-dashboard` and click **OK**.
 
--->
 
 ## Explore Quarto
 
@@ -281,7 +279,7 @@ Databot will:
 
 1. Detect if you're in Posit Workbench with integrated authentication.
 
-2. Provide the appropriate connection code for your environment,
+2. Provide the appropriate connection code for your environment.
 
 3. Guide you through discovering available databases, schemas, and tables.
 
@@ -298,7 +296,7 @@ conn = snowflake.connector.connect(connection_name='workbench')
 
 If you're not in Posit Workbench, Databot will prompt you for connection details and provide the appropriate connection code.
 
-Once connected, you can move on to the next section, which is to [configure the `querychat` and `chatlas` packages to use your Cortex AI-provided LLM](#configure-chatlas-and-querychat).
+Once connected, you can move on to the next section, which is to [configure the `querychat` and `chatlas` packages to work with your Cortex AI-provided LLM](#configure-chatlas-and-querychat).
 
 ### Connect with Code
 
@@ -312,11 +310,11 @@ The code below uses `ibis`, which lets you describe queries in Python. This syst
 
 We don't need to manage the process, it happens automatically behind the scenes.
 
-The code also uses `snowflake.connector` and `posit.connect.external.snowflake` to create a connection that works in multiple environments:
+To ensure our connection works across different environments (development, Workbench, and Connect), the code also uses `snowflake.connector` and `posit.connect.external.snowflake` to create a flexible connection function:
 
-- Local development: Uses explicit credentials.
-- Workbench: Leverages managed credentials via `connection_name="workbench"`.
-- Connect: Uses viewer credentials via `PositAuthenticator`, ensuring each user connects with their own Snowflake credentials, which respects Snowflake's Role-Based Access Control (RBAC).
+- **Local development**: Uses explicit credentials
+- **Workbench**: Leverages managed credentials via `connection_name="workbench"`
+- **Connect**: Uses viewer credentials via `PositAuthenticator`, ensuring each user connects with their own Snowflake credentials, which respects Snowflake's Role-Based Access Control (RBAC)
 
 ```python
 # Import necessary libraries
@@ -391,7 +389,7 @@ from chatlas import ChatSnowflake
 # Initialize ChatSnowflake with Workbench managed credentials
 chat = ChatSnowflake(
     system_prompt="You are a mortgage lending and housing finance data analysis expert",
-    model="claude-haiku-4-5", #Choose from available Cortext AI models
+    model="claude-haiku-4-5", #Choose from available Cortex AI models
     connection_name="workbench",
 )
 
@@ -400,7 +398,7 @@ response = chat.chat("What patterns do you see in home mortgage lending data?")
 print(response)
 ```
 
-When you run the cell, the reponse output will appear in the console.
+When you run the cell, the response output will appear in the console.
 
 ### `querychat`
 
@@ -449,7 +447,7 @@ app = qc.app()
   - For Snowflake Cortex AI, use `"snowflake-cortex/model-name"`
 - `greeting`: Welcome message displayed to users (supports Markdown)
 - `data_description`: Context about the dataset that helps the LLM generate accurate queries
-- `tools` Available capabilities
+- `tools`: Available capabilities
   - `"query"` - SQL analysis only
   - `"update"` - Dashboard filtering only
 
@@ -551,17 +549,21 @@ These insights will help you understand the dataset and inform how you build the
 
 Since we can use natural language to interact with our data via Positron Assistant, we don't need to write any additional SQL queries or data manipulation code. Positron Assistant will handle that for us based on our natural language prompts.
 
-To stat a chat with Positron Assistant, click on the Positron Assistant icon in the toolbar:
+To start a chat with Positron Assistant, click on the Positron Assistant icon in the toolbar:
 
 ![](assets/positron-assistant.png)
 
-You can select your model based on what you have available via Cortex AI. This example will use Claude Haiku 4.5
+You can select your model based on what you have available via Cortex AI. This example will use Claude Haiku 4.5.
 
 ### Create a Dashboard using Shiny
 
-Ask Positron Assistant to create a Dashboard using Shiny, chatlas, and querychat. Enter this prompt:
+Ask Positron Assistant to create a Dashboard using Shiny, `chatlas`, and `querychat`. Enter this prompt:
 
-> Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HOME_MORTGAGE_DISCLOSURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the HMDA mortgage data. I want to be able to ask questions like, "What are the most common loan types?" or "How do loan approval rates vary by state?"
+```
+Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HOME_MORTGAGE_DISCLOSURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the HMDA mortgage data. I want to be able to ask questions like, "What are the most common loan types?" or "How do loan approval rates vary by state?"
+```
+
+<!-- TO-DO: ADD ADDITIONAL CONTENT OR DIRECTIONS WHILE TESTING -->
 
 ## Deploy to Posit Connect
 
@@ -615,17 +617,24 @@ Click the link to open your dashboard. You can now share this URL with your team
 Screenshot should show: The published dashboard running on Connect with the Connect URL visible
 -->
 
-> **Note:** Your dashboard will automatically reconnect to Snowflake using viewer-level authentication. Each user who accesses the content will connect with their own Snowflake credentials, ensuring they only see data they have permission to access.
+> **Note:** Your dashboard will automatically reconnect to Snowflake using viewer-level authentication. Each user who accesses the dashboard will connect with their own Snowflake credentials, ensuring they only see data they have permission to access.
 
 ## Conclusion And Resources
 
-In this guide, we built a complete LLM-powered dashboard for exploring HMDA mortgage data. We created a Snowflake warehouse to query public data, developed a Shiny application using Positron Assistant and Databot with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it.
+### Overview
 
-This pattern of combining Snowflake's public datasets with Cortex AI and Posit's publishing platform creates powerful, accessible analytics applications that anyone can use through natural language.
+In this guide, we built a complete LLM-powered dashboard for exploring HMDA mortgage data. We created a Snowflake warehouse to query public data, developed a Shiny application using Positron Assistant and Databot with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it securely.
+
+The steps we took along the way easily transfer to other datasets and use cases. This pattern of combining Snowflake's data platform and Cortex AI, with Posit's authoring and publishing tools enables you to build and share powerful data applications quickly.
 
 ### What You Learned
 
-
+- How to access and query Snowflake public datasets
+- How to use Databot for exploratory data analysis and publishable Quarto reports
+- How to build with multiple environments in mind using connection code that works seamlessly in Workbench, Connect, and local development
+- How to implement viewer-level authentication to ensure each user connects to Snowflake with their own credentials
+- How to create LLM-powered interfaces by configuring `chatlas` and `querychat` to enable natural language data exploration with Snowflake Cortex AI
+- How to deploy to Connect to publish both Quarto reports and Shiny applications with one-click deployment from Workbench
 
 ### Resources
 
