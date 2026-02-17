@@ -5,14 +5,14 @@ categories: getting-started,data-science-&-ml,partner-integrations
 environments: web
 status: Published
 feedback link: https://github.com/Snowflake-Labs/sfguides/issues
-tags: Getting Started, Data Science, Posit, Python, LLM, AI
+tags: Getting Started, Data Science, Posit, R, LLM, AI
 language: en
 
 # Build and Deploy an Interactive LLM-Powered Dashboard with the Posit Team Native App and Snowflake Cortex AI
 
 ## Overview
 
-In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore Home Mortgage Disclosure Act (HMDA) data using natural language queries powered by Snowflake Cortex AI. We'll use Positron Assistant and Databot to do some quick, yet powerful exploratory data analysis and develop a Shiny application using the `querychat` and `chatlas` Python packages. Along the way, we'll deploy two data analysis products (a Quarto report and the interactive dashboard) to Posit Connect with one-click publishing for easy sharing across our organization.
+In this guide, we'll use the Posit Team Native App to build an interactive dashboard that lets users explore Home Mortgage Disclosure Act (HMDA) data using natural language queries powered by Snowflake Cortex AI. We'll use Positron Assistant and Databot to do some quick, yet powerful exploratory data analysis and develop a Shiny application using the `querychat` and `ellmer` R packages. Along the way, we'll deploy two data analysis products (a Quarto report and the interactive dashboard) to Posit Connect with one-click publishing for easy sharing across our organization.
 
 By the end of this guide, we'll have a fully functional dashboard where users can ask questions like "What are the most common loan types?" or "How do loan approval rates vary by state?" and get instant visualizations and insights.
 
@@ -34,7 +34,7 @@ By the end of this guide, we'll have a fully functional dashboard where users ca
 - A [Snowflake account](https://signup.snowflake.com/?utm_source=snowflake-devrel&utm_medium=developer-guides&utm_cta=developer-guides) with Cortex AI enabled
 - Appropriate access to create warehouses, databases, and schemas in Snowflake. This is typically the `sysadmin` role
 - Access to the [Posit Team Native App](https://www.snowflake.com/en/developers/guides/analyze-data-with-python-using-posit-team/#:~:text=Pro%20from%20the-,Posit%20Team%20Native%20App,-.%20An%20administrator%20with). An administrator with the `accountadmin` role can provide these for you
-- Familiarity with SQL and Python
+- Familiarity with SQL and R
 
 ## Setup
 
@@ -79,7 +79,7 @@ You should see the first 10 rows of the HMDA dataset, which includes columns abo
 
 ## Launch Posit Workbench from the Posit Team Native App
 
-We can now start exploring the data using Workbench. You can find Workbench within the Posit Team Native App, and use it to connect to your database.
+We can now start exploring the data using Posit Workbench. You can find Workbench within the Posit Team Native App, and use it to connect to your database.
 
 ### Step 1: Get the Posit Team Native App from the Snowflake Marketplace
 
@@ -92,7 +92,7 @@ We can now start exploring the data using Workbench. You can find Workbench with
 
 ### Step 2: Open the Posit Team Native App from Snowsight
 
-Please note that your administrator must first [install and configure](https://docs.posit.co/partnerships/snowflake/posit-team/) the Posit Team Native App--and Posit Workbench within it--before you can follow the remaining steps.
+Please note that your administrator must first [install and configure](https://docs.posit.co/partnerships/snowflake/posit-team/) the Posit Team Native App--and Workbench within it--before you can follow the remaining steps.
 
 Once your administrator has installed and configured the Posit Team Native App, in Snowsight, navigate to **Horizon Catalog** > **Catalog** > **Installed Apps** > the Posit Team Native App. If you do not see the Posit Team Native App listed, ask your Snowflake account administrator for access to the app.
 
@@ -102,7 +102,7 @@ Click **Launch app**.
 
 ![](assets/snowflake-launch-app.png)
 
-### Step 3: Open Posit Workbench from the Posit Team Native App
+### Step 3: Open Workbench from the Posit Team Native App
 
 From the Posit Team Native App, click **Posit Workbench**.
 
@@ -117,7 +117,7 @@ the next-generation data science IDE built for Python and R. It combines the pow
 
 ### Step 1: New Session
 
-Within Posit Workbench, click **+ New Session** to launch a new session.
+Within Workbench, click **+ New Session** to launch a new session.
 
 ![](assets/workbench-start-new-session.png)
 
@@ -129,7 +129,7 @@ When prompted, select Positron Pro. You can optionally give your session a uniqu
 
 #### Step 3: Log into your Snowflake account
 
-Next, connect to your Snowflake account from within Posit Workbench.
+Next, connect to your Snowflake account from within Workbench.
 Under **Session Credentials**, click the button with the Snowflake icon to sign in to Snowflake. Follow any sign in prompts.
 
 ![](assets/workbench-snowflake-login-success.png)
@@ -143,7 +143,7 @@ Then, click **Launch** to launch Positron Pro. If desired, you can check the **A
 ![](assets/positron-launch.png)
 
 You will now be able to work with your Snowflake data in Positron Pro. Since the IDE is provided
-by Posit Workbench within the Posit Team Native App, your entire analysis will occur securely within Snowflake.
+by Workbench within the Posit Team Native App, your entire analysis will occur securely within Snowflake.
 
 ## Install the Necessary Extensions
 
@@ -170,7 +170,7 @@ For more information, see the [Shiny extension documentation](https://open-vsx.o
 
 > **Important:** Databot is currently in research preview and not ready for production use.
 
-[Databot](https://positron.posit.co/databot.html) is an AI assistant designed to dramatically accelerate exploratory data analysis for data scientists fluent in Python or R, allowing them to do in minutes what might usually take hours. We'll use it below to both connect to our Snowflake data and conduct some exploratory data analysis (EDA).
+[Databot](https://positron.posit.co/databot.html) is an AI assistant designed to dramatically accelerate exploratory data analysis for data scientists fluent in R or Python, allowing them to do in minutes what might usually take hours. We'll use it below to both connect to our Snowflake data and conduct some exploratory data analysis (EDA).
 
 1. Open the Positron Extensions view: on the right-hand side of Positron Pro, click the Extensions icon in the activity bar to open the Extensions Marketplace.
 
@@ -209,10 +209,13 @@ This guide will walk you through the steps contained in <https://github.com/posi
    - Select **File: Open Folder**.
    - Navigate to `snowflake-posit-build-deploy-LLM-dashboard` and click **OK**.
 
+The repository includes:
+- `quarto.qmd` - Quarto document with R code for data connection and exploration
+- `renv.lock` - R package dependencies lockfile for reproducible environments
 
 ## Explore Quarto
 
-Before we dive into our data analysis, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd), and we'll also create a Quarto document with exploratory data analysis in the [Databot](#explore-the-data-with-databot) section below.
+Before we dive into our data analysis, let's first discuss Quarto, since we've documented the initial steps to connect to our data in a Quarto (`.qmd`) document with R code, [quarto.qmd](https://github.com/posit-dev/snowflake-posit-build-deploy-LLM-dashboard/blob/main/quarto.qmd), and we'll also create a Quarto document with exploratory data analysis in the [Databot](#explore-the-data-with-databot) section below.
 
 [Quarto](https://quarto.org/)
 is an open-source publishing system that makes it easy to create
@@ -243,22 +246,27 @@ generate an HTML file, by default, for you to view and share. This is especially
 
 Learn more about Quarto here: <https://quarto.org/>,
 and the documentation for all the various Quarto outputs here: <https://quarto.org/docs/guide/>.
-Quarto works with Python, R, and Javascript Observable code out-of-the box, and is a great tool to communicate your data science analyses.
+Quarto works with R, Python, and Javascript Observable code out-of-the box, and is a great tool to communicate your data science analyses.
 
-## Create a Virtual Environment
+## Set Up R Environment with renv
 
-Before we can run any code, we need to set up our Python virtual environment.
+Before we can run any code, we need to set up our R environment with the necessary packages. The repository uses `renv` for reproducible package management.
 
-1. Open the Command Palette (`Cmd/Ctrl+Shift+P`), then search for and select **Python: Create Environment**.
+1. Open the R Console in Positron Pro.
 
-2. Choose `Venv` to create a `.venv` virtual environment.
+2. Initialize and restore the project environment:
 
-3. Select the Python version you want to use.
+   ```r
+   # Install renv if not already installed
+   if (!requireNamespace("renv", quietly = TRUE)) {
+     install.packages("renv")
+   }
 
-4. When prompted to **Select dependencies to install**, choose the `requirements.txt` file from the cloned GitHub repo.
+   # Restore the project library from the lockfile
+   renv::restore()
+   ```
 
-   - This creates the virtual environment with the necessary dependencies. Positron activates the virtual environment automatically.
-   - If Positron does not activate the virtual environment automatically, open the terminal and run `source .venv/bin/activate`.
+   This restores all packages specified in the `renv.lock` file, ensuring you have the exact same package versions used when the project was created. This includes `DBI`, `odbc`, `dplyr`, `ellmer`, `querychat`, `shiny`, and `connectapi`.
 
 ## Connect to Snowflake Data
 
@@ -267,7 +275,7 @@ Now that we have our Positron Pro session started with the necessary extensions 
 ### Use Databot to Connect
 
 Instead of manually writing connection code, you can use Databot's built-in Snowflake skill to guide you through the connection process. This is
-especially helpful when you're working in Posit Workbench, as Databot can automatically detect and use managed credentials.
+especially helpful when you're working in Workbench, as Databot can automatically detect and use managed credentials.
 
 In the Databot panel, simply ask:
 
@@ -277,7 +285,7 @@ Help me connect to Snowflake
 
 Databot will:
 
-1. Detect if you're in Posit Workbench with integrated authentication.
+1. Detect if you're in Workbench with integrated authentication.
 
 2. Provide the appropriate connection code for your environment.
 
@@ -285,175 +293,84 @@ Databot will:
 
 4. Help you explore Semantic Views if available.
 
-If you're in Posit Workbench, Databot will provide zero-argument connection code that uses managed credentials:
+If you're in Workbench, Databot will provide zero-argument connection code that uses managed credentials:
 
-```python
-import snowflake.connector
+```r
+library(DBI)
+library(odbc)
 
 # Uses Workbench managed credentials automatically
-conn = snowflake.connector.connect(connection_name='workbench')
+con <- DBI::dbConnect(
+  odbc::snowflake(),
+  connection_name = "workbench"
+)
 ```
 
-If you're not in Posit Workbench, Databot will prompt you for connection details and provide the appropriate connection code.
+If you're not in Workbench, Databot will prompt you for connection details and provide the appropriate connection code.
 
-Once connected, you can move on to the next section, which is to [configure the `querychat` and `chatlas` packages to work with your Cortex AI-provided LLM](#configure-chatlas-and-querychat).
+Once connected, you can move on to the next section, which is to [configure the `querychat` and `ellmer` packages to work with your Cortex AI-provided LLM](#configure-ellmer-and-querychat).
 
 ### Connect with Code
 
-Open the `quarto.qmd` file from `snowflake-posit-build-deploy-LLM-dashboard`. You can now use the **Run Cell** button to run the Python code directly in the Quarto document.
+Open the `quarto.qmd` file from `snowflake-posit-build-deploy-LLM-dashboard`. You can now use the **Run Cell** button to run the R code directly in the Quarto document.
 
-The code below uses `ibis`, which lets you describe queries in Python. This system:
-
-1. Keeps our data in the database, saving memory in the Python session.
-2. Pushes computations to the database, saving compute in the Python session.
-3. Evaluates queries lazily, saving compute in the database.
-
-We don't need to manage the process, it happens automatically behind the scenes.
-
-To ensure our connection works across different environments (development, Workbench, and Connect), the code also uses `snowflake.connector` and `posit.connect.external.snowflake` to create a flexible connection function:
+The code below uses `dplyr`, which provides an intuitive way to work with database tables in R. To ensure our connection works across different environments (development, Workbench, and Connect), the code uses `DBI`, `odbc`, and `connectapi` to create a flexible connection function:
 
 - **Local development**: Uses explicit credentials
 - **Workbench**: Leverages managed credentials via `connection_name="workbench"`
-- **Connect**: Uses viewer credentials via `PositAuthenticator`, ensuring each user connects with their own Snowflake credentials, which respects Snowflake's Role-Based Access Control (RBAC)
+- **Connect**: Uses viewer credentials via OAuth, ensuring each user connects with their own Snowflake credentials, which respects Snowflake's Role-Based Access Control (RBAC)
 
-```python
-# Import necessary libraries
-from posit.connect.external.snowflake import PositAuthenticator
-import snowflake.connector
-import ibis
-import os
+```r
+library(DBI)
+library(odbc)
+library(dplyr)
+library(connectapi)
 
-def get_connection():
-    """Create a Snowflake connection appropriate for the current environment."""
+get_connection <- function() {
+  warehouse <- "MORTGAGE_DATA_WH"
+  database <- "SNOWFLAKE_PUBLIC_DATA_FREE"
+  schema <- "HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
 
-    # Running in Posit Workbench
-    if os.getenv("SNOWFLAKE_HOME") is not None and os.getenv("RSTUDIO_PRODUCT") != "CONNECT":
-        con = snowflake.connector.connect(
-            connection_name="workbench",
-            warehouse="MORTGAGE_DATA_WH",
-            database="SNOWFLAKE_PUBLIC_DATA_FREE",
-            schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES"
-        )
+  if (!is.null(Sys.getenv("SNOWFLAKE_HOME", unset = NULL)) &&
+      Sys.getenv("RSTUDIO_PRODUCT") != "CONNECT") {
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      connection_name = "workbench",
+      warehouse = warehouse,
+      database = database,
+      schema = schema
+    )
+  } else if (Sys.getenv("RSTUDIO_PRODUCT") == "CONNECT") {
+    client <- connectapi::connect()
+    user_session_token <- shiny::session$request$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
+    credentials <- connectapi::get_oauth_credentials(client, user_session_token)
+    token <- credentials$access_token
 
-    # Running in Posit Connect (deployed app)
-    elif os.getenv("RSTUDIO_PRODUCT") == "CONNECT":
-        from shiny import session
+    con <- DBI::dbConnect(
+      odbc::snowflake(),
+      account = "YOUR_ACCOUNT", # Replace with your Snowflake account
+      warehouse = warehouse,
+      database = database,
+      schema = schema,
+      authenticator = "OAUTH",
+      token = token
+    )
+  } else {
+    stop("No Snowflake credentials found.")
+  }
+  return(con)
+}
 
-        # Get the viewer's session token
-        user_session_token = session.http_conn.headers.get("Posit-Connect-User-Session-Token")
-
-        # Create authenticator with viewer's credentials
-        auth = PositAuthenticator(
-            local_authenticator="EXTERNALBROWSER",
-            user_session_token=user_session_token
-        )
-
-        con = snowflake.connector.connect(
-            account="YOUR_ACCOUNT",  # Replace with your Snowflake account
-            warehouse="MORTGAGE_DATA_WH",
-            database="SNOWFLAKE_PUBLIC_DATA_FREE",
-            schema="HOME_MORTGAGE_DISCLOSURE_ATTRIBUTES",
-            authenticator=auth.authenticator,
-            token=auth.token,
-        )
-
-    else:
-        raise ValueError("No Snowflake credentials found. Ensure you're running in Workbench or Connect.")
-
-    return con
-
-# Create connection
-con = get_connection()
-
-# Use Ibis for a Pythonic way to interact with Snowflake data
-ibiscon = ibis.snowflake.from_connection(con, create_object_udfs=False)
-
-mortgage_data = ibiscon.table("HOME_MORTGAGE_DISCLOSURE")
-
-print("Successfully established secure connection to Snowflake!")
+con <- get_connection()
+mortgage_data <- tbl(con, "HOME_MORTGAGE_DISCLOSURE")
+message("Successfully established secure connection to Snowflake!")
 ```
 
-We have now used Workbench and Python to connect to the HMDA mortgage data in Snowflake's public datasets, all securely within Snowflake.
-
-## Configure `chatlas` and `querychat`
-
-When we activated the Python virtual environment before, we installed the packages `chatlas` and `querychat`. However, we still need to configure them to use a Cortex AI-provided LLM and our mortgage data.
-
-### `chatlas`
-
-The `chatlas` package provides a `ChatSnowflake` class that integrates with Snowflake Cortex AI. When using Posit Workbench within the Posit Team Native App, you can use the special `connection_name="workbench"` parameter to leverage Workbench's managed credentials:
-
-```python
-from chatlas import ChatSnowflake
-
-# Initialize ChatSnowflake with Workbench managed credentials
-chat = ChatSnowflake(
-    system_prompt="You are a mortgage lending and housing finance data analysis expert",
-    model="claude-haiku-4-5", #Choose from available Cortex AI models
-    connection_name="workbench",
-)
-
-# Test the connection
-response = chat.chat("What patterns do you see in home mortgage lending data?")
-print(response)
-```
-
-When you run the cell, the response output will appear in the console.
-
-### `querychat`
-
-The `querychat` package creates interactive chat interfaces for data exploration. Building on the Ibis connection we established above, we can configure `querychat` to work with our mortgage data:
-
-```python
-from querychat import QueryChat
-
-# Convert the Ibis table to a pandas DataFrame
-# This loads the data into memory for fast interactive querying
-df = mortgage_data.to_pandas()
-
-# Initialize QueryChat with the mortgage data and Cortex AI
-qc = QueryChat(
-    data_source=df,
-    table_name="HOME_MORTGAGE_DISCLOSURE",
-    client="snowflake-cortex/claude-haiku-4-5",  # Use Snowflake Cortex AI
-    greeting="""
-    # Home Mortgage Disclosure Act (HMDA) Data Explorer
-
-    Ask questions about mortgage lending patterns, loan characteristics, and geographic trends.
-
-    **Example questions:**
-    - What are the most common loan types?
-    - How do loan approval rates vary by state?
-    - Compare loan amounts across different property types
-    """,
-    data_description="""
-    Home Mortgage Disclosure Act (HMDA) dataset containing mortgage application and origination data.
-    Includes information about loan types, applicant demographics, property characteristics, loan amounts,
-    interest rates, and loan outcomes. Data is tracked across U.S. geographic areas, allowing for
-    analysis of lending patterns and trends.
-    """,
-    tools=("query", "update")  # Enable both SQL queries and dashboard filtering
-)
-
-# Create the Shiny app
-app = qc.app()
-```
-
-**Configuration parameters:**
-
-- `data_source`: The pandas DataFrame containing your data (loaded via Ibis from Snowflake)
-- `table_name`: Identifier used in SQL queries (use your actual table name)
-- `client`: LLM specification in `"provider/model"` format
-  - For Snowflake Cortex AI, use `"snowflake-cortex/model-name"`
-- `greeting`: Welcome message displayed to users (supports Markdown)
-- `data_description`: Context about the dataset that helps the LLM generate accurate queries
-- `tools`: Available capabilities
-  - `"query"` - SQL analysis only
-  - `"update"` - Dashboard filtering only
+We have now used Workbench and R to connect to the HMDA mortgage data in Snowflake's public datasets, all securely within Snowflake.
 
 ## Explore the Data with Databot
 
-Before building our dashboard, let's use Databot to explore the mortgage data. Databot is an experimental AI assistant that dramatically accelerates exploratory data analysis (EDA), enabling you to complete analyses in minutes rather than hours. Unlike general coding assistants, Databot is purpose-built for EDA with rapid iteration of short code snippets that execute quickly.
+Before building our dashboard, let's use Databot to explore the mortgage data. Databot is an experimental AI assistant that dramatically accelerates exploratory data analysis (EDA) in R, enabling you to complete analyses in minutes rather than hours. Unlike general coding assistants, Databot is purpose-built for EDA with rapid iteration of short code snippets that execute quickly.
 
 ### Open Databot
 
@@ -519,33 +436,56 @@ Databot will generate a Quarto document that includes:
 - Narrative text explaining the analyses and findings
 - Visualizations and results from your data exploration
 
-After Databot creates the file:
+After Databot creates the file, review the generated `.qmd` file to verify the content and narrative. Then, render the report to preview it by clicking the **Preview** button, or running `quarto preview <filename>.qmd`.
 
-1. Review the generated `.qmd` file to verify the content and narrative.
+Now, you can securely publish the report to Connect to share with your team by following the steps in the [Deploy to Connect](#deploy-to-posit-connect) section.
 
-2. Render the report to preview it:
-   - Click the **Preview** button, or
-   - Run `quarto preview <filename>.qmd` in the terminal
+## Build the LLM Dashboard
 
-3. Publish the report to Posit Connect to share with your team:
-   - Open the Command Palette (`Cmd/Ctrl+Shift+P`) and select **Publish to Connect**
-   - Select your `.qmd` file
-   - Configure publishing options and click **Publish**
+### Configure `ellmer` and `querychat`
 
-Your EDA report will now be accessible to your team on Connect, providing context and insights before they use the interactive dashboard.
+When we installed the R packages before, we installed `ellmer` and `querychat`. However, we still need to configure them to use a Cortex AI-provided LLM and our mortgage data.
 
-### Key Insights to Look For
+#### `ellmer`
 
-As you explore the data with Databot, consider these questions:
+The `ellmer` package provides a `chat_snowflake()` function that integrates with Snowflake Cortex AI. When using Workbench within the Posit Team Native App, you need to provide your Snowflake account information:
 
-- **Geographic patterns:** Which states or regions have the highest/lowest loan volumes or approval rates?
-- **Loan characteristics:** What are the typical loan amounts, interest rates, and loan types?
-- **Property patterns:** How do lending patterns vary by property type (single-family, multifamily, etc.)?
-- **Data coverage:** Which fields have the most complete data across geographic areas?
+```r
+library(ellmer)
 
-These insights will help you understand the dataset and inform how you build the interactive dashboard in the next section.
+chat <- chat_snowflake(
+  system_prompt = "You are a mortgage lending and housing finance data analysis expert",
+  model = "snowflake-arctic",
+  account = Sys.getenv("SNOWFLAKE_ACCOUNT")
+)
 
-## Chat with Positron Assistant using Cortex AI
+response <- chat$chat("What patterns do you see in home mortgage lending data?")
+cat(response)
+```
+
+When you run the cell, the response output will appear in the console.
+
+#### `querychat`
+
+The `querychat` package creates interactive chat interfaces for data exploration. Building on the database connection we established above, we can configure `querychat` to work with our mortgage data:
+
+```r
+library(querychat)
+
+querychat_app(
+  data = mortgage_data,
+  client = chat
+)
+```
+
+The `querychat_app()` function creates a Shiny application that allows users to ask natural language questions about the data. It uses:
+
+- `data`: The database table connection (using `dplyr::tbl()`)
+- `client`: The `ellmer` chat object configured with Snowflake Cortex AI
+
+This simple configuration creates a full interactive dashboard where users can explore the HMDA mortgage data using natural language queries.
+
+### Start a Chat with Positron Assistant
 
 Since we can use natural language to interact with our data via Positron Assistant, we don't need to write any additional SQL queries or data manipulation code. Positron Assistant will handle that for us based on our natural language prompts.
 
@@ -553,17 +493,17 @@ To start a chat with Positron Assistant, click on the Positron Assistant icon in
 
 ![](assets/positron-assistant.png)
 
-You can select your model based on what you have available via Cortex AI. This example will use Claude Haiku 4.5.
+You can select your model based on what you have available via Cortex AI. This example uses Snowflake Arctic.
 
 ### Create a Dashboard using Shiny
 
-Ask Positron Assistant to create a Dashboard using Shiny, `chatlas`, and `querychat`. Enter this prompt:
+Ask Positron Assistant to create a Dashboard using Shiny for R, `ellmer`, and `querychat`. Enter this prompt:
 
 ```
-Let's create an interactive LLM-powered dashboard with Shiny, querychat, and chatlas that will allow users to ask natural language questions to analyze the data in the HOME_MORTGAGE_DISCLOSURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and chatlas that will let users ask natural language questions to explore the HMDA mortgage data. I want to be able to ask questions like, "What are the most common loan types?" or "How do loan approval rates vary by state?"
+Let's create an interactive LLM-powered dashboard with Shiny for R, querychat, and ellmer that will allow users to ask natural language questions to analyze the data in the HOME_MORTGAGE_DISCLOSURE table. Help me build an LLM-powered dashboard with Shiny, querychat, and ellmer that will let users ask natural language questions to explore the HMDA mortgage data. I want to be able to ask questions like, "What are the most common loan types?" or "How do loan approval rates vary by state?"
 ```
 
-<!-- TO-DO: ADD ADDITIONAL CONTENT OR DIRECTIONS WHILE TESTING -->
+<!-- Add content when testing -->
 
 ## Deploy to Posit Connect
 
@@ -574,7 +514,7 @@ Now that your dashboard works locally, let's deploy it to Connect so your team c
 In Positron, open the command palette (Cmd/Ctrl+Shift+P) and search for "Publish to Connect". If this is your first time publishing, you'll need to configure your Connect server.
 
 Click the "Add Server" button and enter:
-- **Server URL**: Your Posit Connect server address (e.g., `https://connect.your-company.com`)
+- **Server URL**: Your Connect server address (e.g., `https://connect.your-company.com`)
 - **API Key**: Generate an API key from your Connect account settings
 
 <!-- TODO: Take screenshot and save as assets/add_server.png
@@ -584,12 +524,11 @@ Screenshot should show: The Add Server dialog in Positron with server URL and AP
 
 ### Publish Your Dashboard
 
-With your `app.py` file open, click the **Deploy** button in the top left corner of Positron, or use the command palette (Cmd/Ctrl+Shift+P) to run "Publish Content".
+With your `app.R` file open, click the **Deploy** button in the top left corner of Positron, or use the command palette (Cmd/Ctrl+Shift+P) to run "Publish Content".
 
 Select the files to include:
-- [x] app.py
-- [x] config.py
-- [ ] .env (do not publish credential files)
+- [x] app.R (or the main Shiny app file)
+- [ ] Any credential or configuration files should not be published
 
 Choose your publishing options:
 - **Title**: HMDA Mortgage Data Explorer
@@ -623,17 +562,17 @@ Screenshot should show: The published dashboard running on Connect with the Conn
 
 ### Overview
 
-In this guide, we built a complete LLM-powered dashboard for exploring HMDA mortgage data. We created a Snowflake warehouse to query public data, developed a Shiny application using Positron Assistant and Databot with the `chatlas` and `querychat` packages, and deployed the dashboard to Posit Connect where your team can access it securely.
+In this guide, we built a complete LLM-powered dashboard for exploring HMDA mortgage data. We created a Snowflake warehouse to query public data, developed a Shiny application using Positron Assistant and Databot with the `ellmer` and `querychat` R packages, and deployed the dashboard to Posit Connect where your team can access it securely.
 
 The steps we took along the way easily transfer to other datasets and use cases. This pattern of combining Snowflake's data platform and Cortex AI, with Posit's authoring and publishing tools enables you to build and share powerful data applications quickly.
 
 ### What You Learned
 
-- How to access and query Snowflake public datasets
+- How to access and query Snowflake public datasets using R
 - How to use Databot for exploratory data analysis and publishable Quarto reports
 - How to build with multiple environments in mind using connection code that works seamlessly in Workbench, Connect, and local development
 - How to implement viewer-level authentication to ensure each user connects to Snowflake with their own credentials
-- How to create LLM-powered interfaces by configuring `chatlas` and `querychat` to enable natural language data exploration with Snowflake Cortex AI
+- How to create LLM-powered interfaces by configuring `ellmer` and `querychat` to enable natural language data exploration with Snowflake Cortex AI
 - How to deploy to Connect to publish both Quarto reports and Shiny applications with one-click deployment from Workbench
 
 ### Resources
@@ -642,9 +581,9 @@ The steps we took along the way easily transfer to other datasets and use cases.
 - **Snowflake Public Data**: [Using Snowflake Data Marketplace](https://docs.snowflake.com/en/user-guide/data-marketplace)
 - **Positron**: [Positron Documentation](https://positron.posit.co/)
 - **Databot**: [Databot Documentation](https://positron.posit.co/databot.html)
-- **`chatlas` Package**: [Documentation](https://posit-dev.github.io/chatlas/)
-- **`querychat` Package**: [Documentation](https://posit-dev.github.io/querychat/py/index.html)
-- **Shiny**: [Documentation](https://shiny.posit.co/)
+- **`ellmer` Package**: [Documentation](https://ellmer.tidyverse.org/)
+- **`querychat` Package**: [Documentation](https://posit-dev.github.io/querychat/)
+- **Shiny for R**: [Documentation](https://shiny.posit.co/)
 - **Posit Workbench**: [User Guide](https://docs.posit.co/ide/server-pro/user/)
 - **Posit Connect**: [User Guide](https://docs.posit.co/connect/user/)
-- **Related Guides**: [Analyze Data with Python Using Posit Team](https://quickstarts.snowflake.com/guide/analyze-data-with-python-using-posit-team/)
+- **Related Guides**: [Analyze Data with R Using Posit Team](https://quickstarts.snowflake.com/guide/analyze-data-with-python-using-posit-team/)
